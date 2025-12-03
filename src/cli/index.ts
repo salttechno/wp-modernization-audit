@@ -33,7 +33,7 @@ program
   ])
   .option("--api-url <apiUrl>", "Override WordPress REST API root URL")
   .option("--format <format>", "Output format: md, html, json", "md")
-  .option("--out <path>", "Output file path", "./wp-modernization-report.md")
+  .option("--out <path>", "Output file path")
   .option("--verbose", "Print additional debug information", false)
   .option("--no-color", "Disable ANSI colors in output");
 
@@ -51,13 +51,33 @@ if (!["md", "html", "json"].includes(options.format)) {
   process.exit(1);
 }
 
+// Generate default output path with domain name if not provided
+let outPath = options.out;
+if (!outPath) {
+  try {
+    const urlObj = new URL(options.url);
+    // Extract hostname and sanitize for filename (remove www., replace dots with hyphens)
+    const domain = urlObj.hostname.replace(/^www\./, "").replace(/\./g, "-");
+    const extension =
+      options.format === "json"
+        ? "json"
+        : options.format === "html"
+        ? "html"
+        : "md";
+    outPath = `./wp-modernization-report-${domain}.${extension}`;
+  } catch (error) {
+    // Fallback if URL parsing fails
+    outPath = "./wp-modernization-report.md";
+  }
+}
+
 // Create config
 const config: AuditConfig = {
   url: options.url,
   pages: options.pages,
   apiUrl: options.apiUrl,
   format: options.format as "md" | "html" | "json",
-  outPath: options.out,
+  outPath,
   verbose: options.verbose,
 };
 
