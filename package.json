@@ -28,7 +28,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/wp-modernization-audit.git"
+    "url": "https://github.com/salttechno/wp-modernization-audit.git"
   },
   "engines": {
     "node": ">=18.0.0"

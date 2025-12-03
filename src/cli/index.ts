@@ -5,7 +5,8 @@
  */
 
 import { Command } from "commander";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 import chalk from "chalk";
 import { fetchPage } from "../collectors/httpCollector";
 import { detectWordPress } from "../collectors/wpDetector";
@@ -66,10 +67,10 @@ if (!outPath) {
         : options.format === "html"
         ? "html"
         : "md";
-    outPath = `./wp-modernization-report-${domain}.${extension}`;
+    outPath = `./reports/wp-modernization-report-${domain}.${extension}`;
   } catch (error) {
     // Fallback if URL parsing fails
-    outPath = "./wp-modernization-report.md";
+    outPath = "./reports/wp-modernization-report.md";
   }
 }
 
@@ -268,6 +269,14 @@ async function runAudit(config: AuditConfig): Promise<void> {
       break;
     default:
       reportContent = generateMarkdownReport(auditResult);
+  }
+
+  // Ensure output directory exists
+  const outDir = path.dirname(config.outPath);
+  try {
+    await mkdir(outDir, { recursive: true });
+  } catch (error) {
+    // Ignore error if directory already exists
   }
 
   // Write report to file
