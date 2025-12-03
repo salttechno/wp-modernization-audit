@@ -168,18 +168,6 @@ This tool follows a modular architecture:
 - **Scoring Engine**: Apply transparent, configurable rules
 - **Report Generators**: Format output for human or machine consumption
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed design documentation.
-
-## Roadmap
-
-- **v0.1.0** (Current): Markdown reports, core auditing
-- **v0.2.0**: HTML and JSON output formats
-- **v0.3.0**: Multi-page crawling and sitemap integration
-- **v0.4.0**: Lighthouse/PageSpeed Insights integration
-- **v1.0.0**: Production-ready with comprehensive testing
-
-See [ROADMAP.md](./ROADMAP.md) for full version plan.
-
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
@@ -191,10 +179,8 @@ MIT © Salt Technologies
 ## Links
 
 - [Documentation](./README.md)
-- [Architecture](./ARCHITECTURE.md)
 - [Scoring Rules](./SCORING_RULES.md)
-- [CLI Usage](./CLI_USAGE.md)
-- [Roadmap](./ROADMAP.md)
+- [Software Outsourcing Company](https://www.salttechno.com/)
 
 ---
 
