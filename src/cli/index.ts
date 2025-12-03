@@ -19,6 +19,8 @@ import { analyzeSecurity } from "../analyzers/security";
 import { analyzeModernization } from "../analyzers/modernization";
 import { calculateScores } from "../scoring/scorer";
 import { generateMarkdownReport } from "../report/markdown";
+import { generateHtmlReport } from "../report/html";
+import { generateJsonReport } from "../report/json";
 import type { AuditConfig, AuditResult, PageResult } from "../types";
 
 const program = new Command();
@@ -259,22 +261,10 @@ async function runAudit(config: AuditConfig): Promise<void> {
       reportContent = generateMarkdownReport(auditResult);
       break;
     case "html":
-      // HTML generator not implemented in v0.1.0
-      console.log(
-        chalk.yellow(
-          "HTML format not yet supported in v0.1.0. Using Markdown instead."
-        )
-      );
-      reportContent = generateMarkdownReport(auditResult);
+      reportContent = generateHtmlReport(auditResult);
       break;
     case "json":
-      // JSON output not implemented in v0.1.0
-      console.log(
-        chalk.yellow(
-          "JSON format not yet supported in v0.1.0. Using Markdown instead."
-        )
-      );
-      reportContent = generateMarkdownReport(auditResult);
+      reportContent = generateJsonReport(auditResult);
       break;
     default:
       reportContent = generateMarkdownReport(auditResult);
