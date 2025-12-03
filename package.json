@@ -1,0 +1,51 @@
+{
+  "name": "wp-modernization-audit",
+  "version": "0.1.0",
+  "description": "A CLI tool that audits WordPress sites and generates modernization reports with performance, SEO, security, and headless-readiness insights",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "wp-modernization-audit": "bin/wp-modernization-audit.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "wordpress",
+    "audit",
+    "modernization",
+    "performance",
+    "seo",
+    "security",
+    "headless",
+    "cli"
+  ],
+  "author": "Salt Technologies",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/wp-modernization-audit.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0-rc.12",
+    "commander": "^12.0.0",
+    "undici": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
+    "eslint": "^8.56.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.1"
+  }
+}
