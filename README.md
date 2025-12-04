@@ -64,17 +64,30 @@ wp-modernization-audit \
   --verbose
 ```
 
+### Auto-discover pages from sitemap
+
+```bash
+wp-modernization-audit \
+  --url https://example.com \
+  --auto-pages \
+  --max-pages 10
+```
+
+> **Note:** When auditing multiple pages, scores are aggregated with intelligent weighting. The homepage receives 2× weight for SEO metrics, and performance metrics are averaged across all pages for a comprehensive assessment.
+
 ## CLI Options
 
-| Option               | Type             | Default                                         | Description                           |
-| -------------------- | ---------------- | ----------------------------------------------- | ------------------------------------- |
-| `--url <url>`        | string           | _(required)_                                    | Base URL of the website to audit      |
-| `--pages <paths...>` | string[]         | `["/"]`                                         | Paths to audit (relative to URL)      |
-| `--api-url <url>`    | string           | auto-detected                                   | Override WordPress REST API root      |
-| `--format <format>`  | `md\|html\|json` | `md`                                            | Output format _(html/json in v0.2.0)_ |
-| `--out <path>`       | string           | `./reports/wp-modernization-report-{domain}.md` | Output file path                      |
-| `--verbose`          | boolean          | `false`                                         | Print debug information               |
-| `--no-color`         | boolean          | `false`                                         | Disable colored output                |
+| Option               | Type             | Default                                         | Description                            |
+| -------------------- | ---------------- | ----------------------------------------------- | -------------------------------------- |
+| `--url <url>`        | string           | _(required)_                                    | Base URL of the website to audit       |
+| `--pages <paths...>` | string[]         | `["/"]`                                         | Paths to audit (relative to URL)       |
+| `--auto-pages`       | boolean          | `false`                                         | Auto-discover pages from sitemap.xml   |
+| `--max-pages <n>`    | number           | `10`                                            | Max pages to audit (with --auto-pages) |
+| `--api-url <url>`    | string           | auto-detected                                   | Override WordPress REST API root       |
+| `--format <format>`  | `md\|html\|json` | `md`                                            | Output format _(html/json in v0.2.0)_  |
+| `--out <path>`       | string           | `./reports/wp-modernization-report-{domain}.md` | Output file path                       |
+| `--verbose`          | boolean          | `false`                                         | Print debug information                |
+| `--no-color`         | boolean          | `false`                                         | Disable colored output                 |
 
 ## What does it check?
 

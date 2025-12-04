@@ -41,6 +41,7 @@ src/
     performanceCollector.ts
     securityCollector.ts
     modernizationCollector.ts
+    sitemapCollector.ts # Sitemap parsing and page discovery
   analyzers/
     performance.ts
     seo.ts
@@ -78,6 +79,8 @@ Output: A `Config` object, e.g.:
 interface AuditConfig {
   url: string;
   pages: string[];
+  autoPages?: boolean; // v0.3.0: Auto-discover from sitemap
+  maxPages?: number; // v0.3.0: Limit discovered pages
   format: "md" | "html" | "json";
   outPath?: string;
   verbose?: boolean;
@@ -151,6 +154,45 @@ For each page:
   - `/wp-json/wp/v2/posts` availability.
   - URL style (clean permalinks vs `?p=123`).
   - Uses CDN or serves assets from origin only.
+
+#### `sitemapCollector.ts` _(v0.3.0)_
+
+- Fetches and parses `sitemap.xml` from the site root.
+- Handles sitemap index files (multiple sitemaps).
+- Extracts URLs with priority and last modification dates.
+- Implements intelligent page selection:
+  - Prioritizes pages with higher sitemap priority.
+  - Considers freshness (lastmod dates).
+  - Always includes homepage.
+  - Limits results to `maxPages` (default: 10).
+
+---
+
+### Multi-Page Aggregation _(v0.3.0)_
+
+When auditing multiple pages, the CLI aggregates results intelligently:
+
+**Performance Metrics:**
+
+- HTML size, scripts, stylesheets, images: **averaged** across all pages.
+- Caching: If **any** page has cache-control, it's marked as present.
+
+**SEO Metrics:**
+
+- **Weighted averaging** with homepage receiving **2× weight**.
+- Coverage calculated for titles, meta descriptions, H1 tags, canonical tags.
+- Example: If 2/3 pages have titles, but one is the homepage, coverage = (2×1 + 1×1) / (2+1+1) = 3/4 = 75%.
+
+**Security Metrics:**
+
+- Taken from the **first page** (typically homepage).
+- Assumes security headers are site-wide.
+
+**Modernization Metrics:**
+
+- REST API and modernization features checked once (not per-page).
+
+This approach provides a comprehensive assessment while preventing any single page from dominating the scores.
 
 ---
 

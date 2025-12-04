@@ -42,15 +42,17 @@ Defaults:
 
 ## CLI options
 
-| Flag         | Type                 | Required | Default                                         | Description                                                                 |
-| ------------ | -------------------- | -------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
-| `--url`      | string               | ✅       | –                                               | Base URL of the website to audit (e.g., `https://example.com`).             |
-| `--pages`    | string[]             | ❌       | `["/"]`                                         | List of paths to audit relative to `--url`.                                 |
-| `--api-url`  | string               | ❌       | auto-detected                                   | Override for WordPress REST API root (e.g., `https://example.com/wp-json`). |
-| `--format`   | `md \| html \| json` | ❌       | `md`                                            | Output format.                                                              |
-| `--out`      | string               | ❌       | `./reports/wp-modernization-report-{domain}.md` | Output file path.                                                           |
-| `--verbose`  | boolean              | ❌       | `false`                                         | Print additional debug information to stdout.                               |
-| `--no-color` | boolean              | ❌       | `false`                                         | Disable ANSI colors in CLI logs.                                            |
+| Flag           | Type                 | Required | Default                                         | Description                                                                 |
+| -------------- | -------------------- | -------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `--url`        | string               | ✅       | –                                               | Base URL of the website to audit (e.g., `https://example.com`).             |
+| `--pages`      | string[]             | ❌       | `["/"]`                                         | List of paths to audit relative to `--url`.                                 |
+| `--auto-pages` | boolean              | ❌       | `false`                                         | Automatically discover pages from sitemap.xml.                              |
+| `--max-pages`  | number               | ❌       | `10`                                            | Maximum number of pages to audit when using `--auto-pages`.                 |
+| `--api-url`    | string               | ❌       | auto-detected                                   | Override for WordPress REST API root (e.g., `https://example.com/wp-json`). |
+| `--format`     | `md \| html \| json` | ❌       | `md`                                            | Output format.                                                              |
+| `--out`        | string               | ❌       | `./reports/wp-modernization-report-{domain}.md` | Output file path.                                                           |
+| `--verbose`    | boolean              | ❌       | `false`                                         | Print additional debug information to stdout.                               |
+| `--no-color`   | boolean              | ❌       | `false`                                         | Disable ANSI colors in CLI logs.                                            |
 
 ---
 
@@ -133,6 +135,31 @@ Use this if:
 
 - WordPress is behind a proxy.
 - The public domain differs from the WP backend domain.
+
+---
+
+### 6. Auto-discovering pages from sitemap
+
+```bash
+wp-modernization-audit \
+  --url https://example.com \
+  --auto-pages \
+  --max-pages 10
+```
+
+This will:
+
+- Automatically fetch `sitemap.xml` from the site.
+- Parse sitemap entries and select top pages by priority/freshness.
+- Audit the discovered pages up to the `--max-pages` limit.
+
+**Multi-page scoring notes:**
+
+- When multiple pages are audited, scores are aggregated intelligently.
+- **Homepage gets 2× weight** for SEO metrics (titles, meta descriptions, H1 tags).
+- **Performance metrics** (HTML size, scripts, images) are averaged across all pages.
+- **Security metrics** are taken from the homepage.
+- This provides a more comprehensive and accurate assessment than single-page audits.
 
 ---
 

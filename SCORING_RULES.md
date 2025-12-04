@@ -21,6 +21,38 @@ Total: **100 points**
 
 ---
 
+## Multi-Page Scoring _(v0.3.0)_
+
+When auditing multiple pages (using `--pages` or `--auto-pages`), scores are aggregated to provide a comprehensive site-wide assessment:
+
+### Weighted SEO Scoring
+
+- Homepage receives **2× weight** for SEO metrics
+- Other pages receive **1× weight**
+- Coverage percentage = (weighted pages with feature) / (total weighted pages)
+
+**Example:** Site with homepage + 2 other pages
+
+- Homepage has title ✅ (weight: 2)
+- Page 2 has title ✅ (weight: 1)
+- Page 3 missing title ❌ (weight: 1)
+- **Title coverage** = (2 + 1) / (2 + 1 + 1) = **75%**
+
+This weighting reflects the homepage's outsized importance for SEO and user first impressions.
+
+### Performance Averaging
+
+- HTML size, scripts, stylesheets, images: **arithmetic mean** across all pages
+- Provides representative snapshot of typical page weight
+- Prevents outliers from dominating the score
+
+### Security & Modernization
+
+- Security headers: Evaluated from first page (assumes site-wide configuration)
+- REST API & modernization features: Checked once (site-level capabilities)
+
+---
+
 ## 1. Performance (30 points)
 
 Assessed per key page, then aggregated (e.g., average or weighted by page type).
