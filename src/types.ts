@@ -13,6 +13,8 @@ export interface AuditConfig {
   format: "md" | "html" | "json";
   outPath: string;
   verbose: boolean;
+  autoPages?: boolean;
+  maxPages?: number;
 }
 
 // ============================================================================

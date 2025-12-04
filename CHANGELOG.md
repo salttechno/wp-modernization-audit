@@ -5,6 +5,26 @@ All notable changes to wp-modernization-audit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-03
+
+### Added
+
+- **Auto-Page Discovery**: `--auto-pages` flag to automatically discover pages from sitemap.xml
+- **Sitemap Support**: Parse sitemap.xml and sitemap index files
+- **Smart Page Selection**: Intelligently select top N pages based on priority and freshness
+- **Max Pages Limit**: `--max-pages` option to control audit scope (default: 10)
+- Multi-page auditing with weighted score aggregation
+
+### Changed
+
+- Homepage gets 2x weight in SEO scoring for better accuracy
+- Improved handling of multiple pages in reports
+- Better progress indicators during multi-page audits
+
+### Fixed
+
+- Retry logic now properly handles transient network failures
+
 ## [0.2.0] - 2025-12-03
 
 ### Added

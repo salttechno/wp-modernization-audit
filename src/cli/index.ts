@@ -22,6 +22,7 @@ import { calculateScores } from "../scoring/scorer";
 import { generateMarkdownReport } from "../report/markdown";
 import { generateHtmlReport } from "../report/html";
 import { generateJsonReport } from "../report/json";
+import { fetchSitemap, selectTopPages } from "../collectors/sitemapCollector";
 import type { AuditConfig, AuditResult, PageResult } from "../types";
 
 const program = new Command();
@@ -29,7 +30,7 @@ const program = new Command();
 program
   .name("wp-modernization-audit")
   .description("Audit a WordPress site and generate a modernization report")
-  .version("0.1.0")
+  .version("0.3.0")
   .requiredOption("--url <url>", "Base URL of the website to audit")
   .option("--pages <pages...>", "List of paths to audit (relative to URL)", [
     "/",
@@ -37,6 +38,16 @@ program
   .option("--api-url <apiUrl>", "Override WordPress REST API root URL")
   .option("--format <format>", "Output format: md, html, json", "md")
   .option("--out <path>", "Output file path")
+  .option(
+    "--auto-pages",
+    "Automatically discover pages from sitemap.xml",
+    false
+  )
+  .option(
+    "--max-pages <number>",
+    "Maximum number of pages to audit (default: 10 with --auto-pages)",
+    "10"
+  )
   .option("--verbose", "Print additional debug information", false)
   .option("--no-color", "Disable ANSI colors in output");
 
@@ -68,13 +79,17 @@ if (!outPath) {
         ? "html"
         : "md";
     outPath = `./reports/wp-modernization-report-${domain}.${extension}`;
-  } catch (error) {
-    // Fallback if URL parsing fails
-    outPath = "./reports/wp-modernization-report.md";
-  }
+  } catch (error) {}
 }
 
-// Create config
+// Validate maxPages
+const maxPages = parseInt(options.maxPages, 10);
+if (isNaN(maxPages) || maxPages < 1) {
+  console.error(chalk.red("--max-pages must be a positive integer"));
+  process.exit(1);
+}
+
+// Create config (auto-pages discovery will happen inside runAudit)
 const config: AuditConfig = {
   url: options.url,
   pages: options.pages,
@@ -82,9 +97,10 @@ const config: AuditConfig = {
   format: options.format as "md" | "html" | "json",
   outPath,
   verbose: options.verbose,
+  autoPages: options.autoPages,
+  maxPages,
 };
 
-// Run the audit
 runAudit(config).catch((error) => {
   console.error(chalk.red("Audit failed:"), error.message);
   if (config.verbose) {
@@ -94,14 +110,55 @@ runAudit(config).catch((error) => {
 });
 
 async function runAudit(config: AuditConfig): Promise<void> {
+  // Handle auto-pages discovery if enabled
+  let pagesToAudit = config.pages;
+
+  if (config.autoPages) {
+    if (config.verbose) {
+      console.log(
+        chalk.blue("\n🔍 Auto-discovering pages from sitemap.xml...\n")
+      );
+    }
+
+    const sitemapUrls = await fetchSitemap(config.url, config.verbose);
+
+    if (sitemapUrls.length > 0) {
+      const selectedUrls = selectTopPages(sitemapUrls, config.maxPages || 10);
+
+      // Convert full URLs to paths relative to base URL
+      pagesToAudit = selectedUrls.map((url) => {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.pathname + urlObj.search || "/";
+        } catch {
+          return "/";
+        }
+      });
+
+      if (config.verbose) {
+        console.log(chalk.green(`Found ${sitemapUrls.length} URLs in sitemap`));
+        console.log(
+          chalk.green(`Selected ${pagesToAudit.length} pages to audit\n`)
+        );
+      }
+    } else {
+      if (config.verbose) {
+        console.log(
+          chalk.yellow("No sitemap found, falling back to homepage\n")
+        );
+      }
+      pagesToAudit = ["/"];
+    }
+  }
+
   console.log(chalk.blue.bold("\n🔍 WordPress Modernization Audit\n"));
   console.log(`Auditing: ${chalk.cyan(config.url)}`);
-  console.log(`Pages: ${chalk.cyan(config.pages.join(", "))}\n`);
+  console.log(`Pages: ${chalk.cyan(pagesToAudit.join(", "))}\n`);
 
   // Audit each page
   const pageResults: PageResult[] = [];
 
-  for (const pagePath of config.pages) {
+  for (const pagePath of pagesToAudit) {
     const pageUrl = new URL(pagePath, config.url).toString();
 
     if (config.verbose) {
@@ -187,17 +244,136 @@ async function runAudit(config: AuditConfig): Promise<void> {
     config.verbose
   );
 
-  // Aggregate results across pages (for MVP, we'll use the first page as representative)
-  // In future versions, this could be more sophisticated
-  const aggregatedPerf = firstPage.performanceResult;
-  const aggregatedSeo = firstPage.seoResult;
-  const aggregatedSec = firstPage.securityResult;
+  // Aggregate results across all pages with weighted averaging
+  // Homepage (/) gets 2x weight for SEO metrics, other pages get 1x
+  const isHomepage = (path: string) => path === "/" || path === "";
+
+  // Aggregate Performance Data (average across all pages)
+  const aggregatedPerf = {
+    htmlSizeBytes: Math.round(
+      pageResults.reduce(
+        (sum, p) => sum + p.performanceResult.htmlSizeBytes,
+        0
+      ) / pageResults.length
+    ),
+    numScripts: Math.round(
+      pageResults.reduce((sum, p) => sum + p.performanceResult.numScripts, 0) /
+        pageResults.length
+    ),
+    numStylesheets: Math.round(
+      pageResults.reduce(
+        (sum, p) => sum + p.performanceResult.numStylesheets,
+        0
+      ) / pageResults.length
+    ),
+    blockingScripts: Math.round(
+      pageResults.reduce(
+        (sum, p) => sum + p.performanceResult.blockingScripts,
+        0
+      ) / pageResults.length
+    ),
+    blockingStylesheets: Math.round(
+      pageResults.reduce(
+        (sum, p) => sum + p.performanceResult.blockingStylesheets,
+        0
+      ) / pageResults.length
+    ),
+    imageFormats: {
+      jpeg: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.jpeg,
+          0
+        ) / pageResults.length
+      ),
+      png: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.png,
+          0
+        ) / pageResults.length
+      ),
+      webp: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.webp,
+          0
+        ) / pageResults.length
+      ),
+      avif: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.avif,
+          0
+        ) / pageResults.length
+      ),
+      svg: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.svg,
+          0
+        ) / pageResults.length
+      ),
+      gif: Math.round(
+        pageResults.reduce(
+          (sum, p) => sum + p.performanceResult.imageFormats.gif,
+          0
+        ) / pageResults.length
+      ),
+    },
+    hasCacheControl: pageResults.some(
+      (p) => p.performanceResult.hasCacheControl
+    ),
+    cacheControlValue: pageResults.find(
+      (p) => p.performanceResult.cacheControlValue
+    )?.performanceResult.cacheControlValue,
+  };
+
+  // Aggregate SEO Data (weighted average - homepage gets 2x weight)
+  const seoScores = pageResults.map((p) => ({
+    page: p,
+    weight: isHomepage(p.path) ? 2 : 1,
+  }));
+
+  const totalSeoWeight = seoScores.reduce((sum, s) => sum + s.weight, 0);
+
+  // Count pages with good SEO elements (weighted)
+  const pagesWithTitle = seoScores
+    .filter((s) => s.page.seoResult.title)
+    .reduce((sum, s) => sum + s.weight, 0);
+  const pagesWithMeta = seoScores
+    .filter((s) => s.page.seoResult.metaDescription)
+    .reduce((sum, s) => sum + s.weight, 0);
+  const pagesWithCanonical = seoScores
+    .filter((s) => s.page.seoResult.canonicalUrl)
+    .reduce((sum, s) => sum + s.weight, 0);
+  const pagesWithGoodH1 = seoScores
+    .filter((s) => s.page.seoResult.h1Tags.length === 1)
+    .reduce((sum, s) => sum + s.weight, 0);
+
+  const aggregatedSeo = {
+    title: pagesWithTitle > 0 ? pageResults[0].seoResult.title : undefined, // Use first page's title for display
+    metaDescription:
+      pagesWithMeta > 0 ? pageResults[0].seoResult.metaDescription : undefined,
+    canonicalUrl:
+      pagesWithCanonical > 0
+        ? pageResults[0].seoResult.canonicalUrl
+        : undefined,
+    h1Tags: pagesWithGoodH1 > 0 ? pageResults[0].seoResult.h1Tags : [],
+    hasRobotsTxt: pageResults.some((p) => p.seoResult.hasRobotsTxt),
+    hasSitemap: pageResults.some((p) => p.seoResult.hasSitemap),
+    // Add aggregation metadata for analyzer
+    _aggregation: {
+      titleCoverage: pagesWithTitle / totalSeoWeight,
+      metaCoverage: pagesWithMeta / totalSeoWeight,
+      canonicalCoverage: pagesWithCanonical / totalSeoWeight,
+      h1Coverage: pagesWithGoodH1 / totalSeoWeight,
+      totalPages: pageResults.length,
+    },
+  };
+
+  const aggregatedSecurity = firstPage.securityResult;
 
   // Run analyzers
   console.log(chalk.gray("\nAnalyzing results..."));
   const performanceAnalysis = analyzePerformance(aggregatedPerf);
   const seoAnalysis = analyzeSeo(aggregatedSeo);
-  const securityAnalysis = analyzeSecurity(aggregatedSec);
+  const securityAnalysis = analyzeSecurity(aggregatedSecurity);
   const modernizationAnalysis = analyzeModernization(modernizationResult);
 
   // Calculate scores
