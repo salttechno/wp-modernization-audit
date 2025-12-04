@@ -14,6 +14,7 @@ import { collectSeoData } from "../collectors/seoCollector";
 import { collectPerformanceData } from "../collectors/performanceCollector";
 import { collectSecurityData } from "../collectors/securityCollector";
 import { collectModernizationData } from "../collectors/modernizationCollector";
+import { collectLighthouseData } from "../collectors/lighthouseCollector";
 import { analyzePerformance } from "../analyzers/performance";
 import { analyzeSeo } from "../analyzers/seo";
 import { analyzeSecurity } from "../analyzers/security";
@@ -30,7 +31,7 @@ const program = new Command();
 program
   .name("wp-modernization-audit")
   .description("Audit a WordPress site and generate a modernization report")
-  .version("0.3.0")
+  .version("0.4.0")
   .requiredOption("--url <url>", "Base URL of the website to audit")
   .option("--pages <pages...>", "List of paths to audit (relative to URL)", [
     "/",
@@ -47,6 +48,15 @@ program
     "--max-pages <number>",
     "Maximum number of pages to audit (default: 10 with --auto-pages)",
     "10"
+  )
+  .option(
+    "--ps-api-key <key>",
+    "Google PageSpeed Insights API key (optional, enables Core Web Vitals)"
+  )
+  .option(
+    "--ps-strategy <strategy>",
+    "PageSpeed strategy: mobile, desktop, or both (default: mobile)",
+    "mobile"
   )
   .option("--verbose", "Print additional debug information", false)
   .option("--no-color", "Disable ANSI colors in output");
@@ -89,6 +99,20 @@ if (isNaN(maxPages) || maxPages < 1) {
   process.exit(1);
 }
 
+// Get PageSpeed API key from CLI option or environment variable
+const psApiKey = options.psApiKey || process.env.PAGESPEED_API_KEY;
+
+// Validate ps-strategy
+const psStrategy = options.psStrategy as "mobile" | "desktop" | "both";
+if (!["mobile", "desktop", "both"].includes(psStrategy)) {
+  console.error(
+    chalk.red(
+      `Invalid --ps-strategy: ${psStrategy}. Must be one of: mobile, desktop, both`
+    )
+  );
+  process.exit(1);
+}
+
 // Create config (auto-pages discovery will happen inside runAudit)
 const config: AuditConfig = {
   url: options.url,
@@ -99,6 +123,8 @@ const config: AuditConfig = {
   verbose: options.verbose,
   autoPages: options.autoPages,
   maxPages,
+  psApiKey,
+  psStrategy,
 };
 
 runAudit(config).catch((error) => {
@@ -195,6 +221,24 @@ async function runAudit(config: AuditConfig): Promise<void> {
       httpResult.body
     );
 
+    // Collect PageSpeed Insights data if API key is provided (v0.4.0)
+    let lighthouseData = undefined;
+    if (config.psApiKey) {
+      // Only fetch PageSpeed data for homepage or first few pages to avoid rate limits
+      const shouldFetchPageSpeed = pagePath === "/" || pageResults.length < 3; // Limit to 3 pages max
+
+      if (shouldFetchPageSpeed) {
+        lighthouseData = await collectLighthouseData(pageUrl, {
+          apiKey: config.psApiKey,
+          strategy: config.psStrategy === "both" ? "mobile" : config.psStrategy,
+          verbose: config.verbose,
+        });
+
+        // If strategy is "both", also fetch desktop data
+        // For now, we'll just use mobile. Desktop can be added later.
+      }
+    }
+
     pageResults.push({
       path: pagePath,
       url: pageUrl,
@@ -202,6 +246,7 @@ async function runAudit(config: AuditConfig): Promise<void> {
       seoResult,
       performanceResult,
       securityResult,
+      lighthouseData: lighthouseData || undefined,
     });
   }
 
@@ -369,9 +414,17 @@ async function runAudit(config: AuditConfig): Promise<void> {
 
   const aggregatedSecurity = firstPage.securityResult;
 
+  // Get lighthouse data from homepage if available (v0.4.0)
+  const lighthouseData =
+    pageResults.find((p) => p.path === "/")?.lighthouseData ||
+    firstPage.lighthouseData;
+
   // Run analyzers
   console.log(chalk.gray("\nAnalyzing results..."));
-  const performanceAnalysis = analyzePerformance(aggregatedPerf);
+  const performanceAnalysis = analyzePerformance(
+    aggregatedPerf,
+    lighthouseData
+  );
   const seoAnalysis = analyzeSeo(aggregatedSeo);
   const securityAnalysis = analyzeSecurity(aggregatedSecurity);
   const modernizationAnalysis = analyzeModernization(modernizationResult);

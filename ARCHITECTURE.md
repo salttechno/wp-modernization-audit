@@ -35,13 +35,14 @@ src/
   cli/
     index.ts            # CLI entrypoint, argument parsing
   collectors/
-    httpCollector.ts    # Fetch pages, handle HTTP and errors
-    wpDetector.ts       # WP detection, version, theme
-    seoCollector.ts     # Titles, meta, headings, canonical
-    performanceCollector.ts
-    securityCollector.ts
-    modernizationCollector.ts
-    sitemapCollector.ts # Sitemap parsing and page discovery
+  │   ├── httpCollector.ts      # Fetch pages & headers
+  │   ├── lighthouseCollector.ts # Google PageSpeed Insights API (v0.4.0)
+  │   ├── modernizationCollector.ts # Check API & features
+  │   ├── performanceCollector.ts # Analyze assets & timing
+  │   ├── securityCollector.ts  # Check headers & SSL
+  │   ├── seoCollector.ts       # Parse meta tags
+  │   ├── sitemapCollector.ts   # Parse sitemap.xml (v0.3.0)
+  │   └── wpDetector.ts         # Identify WP version/theme
   analyzers/
     performance.ts
     seo.ts
@@ -79,11 +80,14 @@ Output: A `Config` object, e.g.:
 interface AuditConfig {
   url: string;
   pages: string[];
-  autoPages?: boolean; // v0.3.0: Auto-discover from sitemap
-  maxPages?: number; // v0.3.0: Limit discovered pages
+  autoPages: boolean;
+  maxPages: number;
+  psApiKey?: string; // v0.4.0
+  psStrategy?: "mobile" | "desktop" | "both"; // v0.4.0
+  apiUrl?: string;
   format: "md" | "html" | "json";
-  outPath?: string;
-  verbose?: boolean;
+  outputPath: string;
+  verbose: boolean;
 }
 ```
 

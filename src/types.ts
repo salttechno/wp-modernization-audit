@@ -15,6 +15,8 @@ export interface AuditConfig {
   verbose: boolean;
   autoPages?: boolean;
   maxPages?: number;
+  psApiKey?: string; // v0.4.0: PageSpeed Insights API key
+  psStrategy?: "mobile" | "desktop" | "both"; // v0.4.0: PageSpeed strategy
 }
 
 // ============================================================================
@@ -83,6 +85,18 @@ export interface ModernizationResult {
   cdnDomains: string[];
 }
 
+// v0.4.0: PageSpeed Insights / Lighthouse Data
+export interface LighthouseData {
+  lcp: number; // Largest Contentful Paint (ms)
+  fid?: number; // First Input Delay (ms) - field data only
+  cls: number; // Cumulative Layout Shift (score)
+  inp: number; // Interaction to Next Paint (ms)
+  ttfb: number; // Time to First Byte (ms)
+  performanceScore: number; // Overall Lighthouse performance score (0-100)
+  strategy: "mobile" | "desktop";
+  fetchedAt: string; // ISO timestamp
+}
+
 // ============================================================================
 // Analyzer Result Types
 // ============================================================================
@@ -92,6 +106,13 @@ export interface PerformanceAnalysis {
   scriptLoadCategory: "excellent" | "good" | "heavy";
   imageOptimization: "excellent" | "good" | "poor";
   caching: "excellent" | "partial" | "none";
+  coreWebVitals?: {
+    // v0.4.0: Optional PageSpeed data
+    lcpStatus: "good" | "needs-improvement" | "poor";
+    clsStatus: "good" | "needs-improvement" | "poor";
+    inpStatus: "good" | "needs-improvement" | "poor";
+    ttfbStatus: "good" | "needs-improvement" | "poor";
+  };
   issues: string[];
   recommendations: string[];
 }
@@ -136,6 +157,7 @@ export interface PageResult {
   seoResult: SeoResult;
   performanceResult: PerformanceResult;
   securityResult: SecurityResult;
+  lighthouseData?: LighthouseData; // v0.4.0: Optional PageSpeed data
 }
 
 // ============================================================================
@@ -143,14 +165,14 @@ export interface PageResult {
 // ============================================================================
 
 export interface CategoryScores {
-  performance: number; // 0-30
+  performance: number; // 0-30 baseline, up to 41 with Core Web Vitals bonus (v0.4.0)
   seo: number; // 0-25
   security: number; // 0-25
   modernization: number; // 0-20
 }
 
 export interface ScoringResult extends CategoryScores {
-  overall: number; // 0-100
+  overall: number; // 0-100 baseline, up to 111 with Core Web Vitals bonus (v0.4.0)
   rating: "healthy" | "needs-optimization" | "needs-modernization" | "legacy";
 }
 

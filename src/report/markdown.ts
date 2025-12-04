@@ -110,6 +110,67 @@ export function generateMarkdownReport(result: AuditResult): string {
     sections.push("");
   }
 
+  // Core Web Vitals Section (v0.4.0) - if PageSpeed data available
+  if (result.analyses.performance.coreWebVitals) {
+    const vitals = result.analyses.performance.coreWebVitals;
+    const homepageLighthouseData =
+      result.pages.find((p) => p.path === "/")?.lighthouseData ||
+      result.pages[0]?.lighthouseData;
+
+    sections.push("### 🚀 Core Web Vitals (via PageSpeed Insights API)\n");
+    sections.push("| Metric | Value | Status | Target |");
+    sections.push("|--------|-------|--------|--------|");
+
+    if (homepageLighthouseData) {
+      // LCP
+      sections.push(
+        `| LCP (Largest Contentful Paint) | ${(
+          homepageLighthouseData.lcp / 1000
+        ).toFixed(2)}s | ${getVitalStatus(vitals.lcpStatus)} | < 2.5s |`
+      );
+
+      // CLS
+      sections.push(
+        `| CLS (Cumulative Layout Shift) | ${homepageLighthouseData.cls.toFixed(
+          3
+        )} | ${getVitalStatus(vitals.clsStatus)} | < 0.1 |`
+      );
+
+      // INP
+      sections.push(
+        `| INP (Interaction to Next Paint) | ${
+          homepageLighthouseData.inp
+        }ms | ${getVitalStatus(vitals.inpStatus)} | < 200ms |`
+      );
+
+      // TTFB
+      sections.push(
+        `| TTFB (Time to First Byte) | ${
+          homepageLighthouseData.ttfb
+        }ms | ${getVitalStatus(vitals.ttfbStatus)} | < 800ms |`
+      );
+
+      sections.push("");
+      sections.push(
+        `**Lighthouse Performance Score:** ${Math.round(
+          homepageLighthouseData.performanceScore
+        )}/100`
+      );
+      sections.push(
+        `**Strategy:** ${
+          homepageLighthouseData.strategy.charAt(0).toUpperCase() +
+          homepageLighthouseData.strategy.slice(1)
+        }`
+      );
+      sections.push(
+        `**Data Source:** Google PageSpeed Insights API ([View full report](https://pagespeed.web.dev/analysis?url=${encodeURIComponent(
+          result.url
+        )}))`
+      );
+      sections.push("");
+    }
+  }
+
   // SEO Section
   sections.push("---\n");
   sections.push(`## 2. SEO Foundations (${result.scores.seo}/25)\n`);
@@ -232,6 +293,17 @@ function getScoreStatus(score: number, maxScore: number): string {
   if (percentage >= 80) return "✅ Good";
   if (percentage >= 60) return "⚠️  Needs Work";
   return "🚨 Critical";
+}
+
+function getVitalStatus(status: "good" | "needs-improvement" | "poor"): string {
+  switch (status) {
+    case "good":
+      return "✅ Good";
+    case "needs-improvement":
+      return "⚠️  Needs Improvement";
+    case "poor":
+      return "❌ Poor";
+  }
 }
 
 function getPerformanceAssessment(analysis: any): string {

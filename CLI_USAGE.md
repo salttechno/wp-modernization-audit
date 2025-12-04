@@ -42,17 +42,19 @@ Defaults:
 
 ## CLI options
 
-| Flag           | Type                 | Required | Default                                         | Description                                                                 |
-| -------------- | -------------------- | -------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
-| `--url`        | string               | ✅       | –                                               | Base URL of the website to audit (e.g., `https://example.com`).             |
-| `--pages`      | string[]             | ❌       | `["/"]`                                         | List of paths to audit relative to `--url`.                                 |
-| `--auto-pages` | boolean              | ❌       | `false`                                         | Automatically discover pages from sitemap.xml.                              |
-| `--max-pages`  | number               | ❌       | `10`                                            | Maximum number of pages to audit when using `--auto-pages`.                 |
-| `--api-url`    | string               | ❌       | auto-detected                                   | Override for WordPress REST API root (e.g., `https://example.com/wp-json`). |
-| `--format`     | `md \| html \| json` | ❌       | `md`                                            | Output format.                                                              |
-| `--out`        | string               | ❌       | `./reports/wp-modernization-report-{domain}.md` | Output file path.                                                           |
-| `--verbose`    | boolean              | ❌       | `false`                                         | Print additional debug information to stdout.                               |
-| `--no-color`   | boolean              | ❌       | `false`                                         | Disable ANSI colors in CLI logs.                                            |
+| Flag            | Type                        | Required | Default                                         | Description                                                                 |
+| --------------- | --------------------------- | -------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `--url`         | string                      | ✅       | –                                               | Base URL of the website to audit (e.g., `https://example.com`).             |
+| `--pages`       | string[]                    | ❌       | `["/"]`                                         | List of paths to audit relative to `--url`.                                 |
+| `--auto-pages`  | boolean                     | ❌       | `false`                                         | Automatically discover pages from sitemap.xml.                              |
+| `--max-pages`   | number                      | ❌       | `10`                                            | Maximum number of pages to audit when using `--auto-pages`.                 |
+| `--ps-api-key`  | string                      | ❌       | –                                               | Google PageSpeed Insights API key (enables Core Web Vitals).                |
+| `--ps-strategy` | `mobile \| desktop \| both` | ❌       | `mobile`                                        | Strategy for PageSpeed Insights analysis.                                   |
+| `--api-url`     | string                      | ❌       | auto-detected                                   | Override for WordPress REST API root (e.g., `https://example.com/wp-json`). |
+| `--format`      | `md \| html \| json`        | ❌       | `md`                                            | Output format.                                                              |
+| `--out`         | string                      | ❌       | `./reports/wp-modernization-report-{domain}.md` | Output file path.                                                           |
+| `--verbose`     | boolean                     | ❌       | `false`                                         | Print additional debug information to stdout.                               |
+| `--no-color`    | boolean                     | ❌       | `false`                                         | Disable ANSI colors in CLI logs.                                            |
 
 ---
 
@@ -153,13 +155,50 @@ This will:
 - Parse sitemap entries and select top pages by priority/freshness.
 - Audit the discovered pages up to the `--max-pages` limit.
 
+## Using Google PageSpeed Insights (v0.4.0)
+
+You can integrate real-world Core Web Vitals data into your audit by providing a Google PageSpeed Insights API key. This adds LCP, CLS, INP, and TTFB metrics to your report and can boost your performance score with bonus points.
+
+### 1. Get an API Key
+
+1. Go to the [Google PageSpeed Insights API page](https://developers.google.com/speed/docs/insights/v5/get-started).
+2. Click "Get a Key".
+3. Create or select a project and copy the API key.
+
+### 2. Usage
+
+You can pass the key via the `--ps-api-key` flag or the `PAGESPEED_API_KEY` environment variable.
+
+**Option A: CLI Flag**
+
+```bash
+wp-modernization-audit --url https://example.com --ps-api-key YOUR_API_KEY
+```
+
+**Option B: Environment Variable**
+
+```bash
+export PAGESPEED_API_KEY=YOUR_API_KEY
+wp-modernization-audit --url https://example.com
+```
+
+### 3. Strategies
+
+By default, the tool uses the `mobile` strategy. You can change this using `--ps-strategy`:
+
+```bash
+# Audit desktop performance
+wp-modernization-audit --url https://example.com --ps-api-key KEY --ps-strategy desktop
+
+# Audit both (currently uses mobile for scoring)
+wp-modernization-audit --url https://example.com --ps-api-key KEY --ps-strategy both
+```
+
+> **Note:** To avoid hitting API rate limits, the tool only fetches PageSpeed data for the homepage and up to 2 other pages per run.
+
 **Multi-page scoring notes:**
 
-- When multiple pages are audited, scores are aggregated intelligently.
-- **Homepage gets 2× weight** for SEO metrics (titles, meta descriptions, H1 tags).
-- **Performance metrics** (HTML size, scripts, images) are averaged across all pages.
-- **Security metrics** are taken from the homepage.
-- This provides a more comprehensive and accurate assessment than single-page audits.
+> **Note:** When auditing multiple pages, scores are aggregated with intelligent weighting. The homepage receives 2× weight for SEO metrics, and performance metrics are averaged across all pages for a comprehensive assessment.
 
 ---
 

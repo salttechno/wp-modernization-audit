@@ -5,6 +5,26 @@ All notable changes to wp-modernization-audit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-04
+
+### Added
+
+- **Google PageSpeed Insights Integration**: Fetch real-world Core Web Vitals (LCP, CLS, INP, TTFB) using the PageSpeed API.
+- **Core Web Vitals Scoring**: Bonus points (up to +11) awarded for passing Web Vitals metrics.
+- **New CLI Options**:
+  - `--ps-api-key`: Provide your Google PageSpeed Insights API key.
+  - `--ps-strategy`: Choose between `mobile` (default), `desktop`, or `both`.
+- **Environment Variable Support**: Use `PAGESPEED_API_KEY` instead of the CLI flag.
+- **Enhanced Reports**:
+  - **Markdown**: New "Core Web Vitals" table with status and values.
+  - **HTML**: Styled Core Web Vitals section with visual indicators.
+  - **JSON**: Includes raw PageSpeed data and vitals analysis.
+
+### Changed
+
+- **Performance Scoring**: Updated scoring rules to include bonus points for Web Vitals (max score increased from 30 to 41).
+- **Report Footer**: Updated version to 0.4.0.
+
 ## [0.3.0] - 2025-12-03
 
 ### Added

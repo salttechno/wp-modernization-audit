@@ -53,7 +53,7 @@ This weighting reflects the homepage's outsized importance for SEO and user firs
 
 ---
 
-## 1. Performance (30 points)
+## 1. Performance (30 points + up to 11 bonus points)
 
 Assessed per key page, then aggregated (e.g., average or weighted by page type).
 
@@ -66,17 +66,15 @@ Assessed per key page, then aggregated (e.g., average or weighted by page type).
 
 ### 1.2 Total JS payload (0–8 pts) _(approximate)_
 
-- `< 500 KB` → 8 pts
-- `500–1000 KB` → 5 pts
-- `> 1000 KB` → 1 pt (heavy)
+- `< 10 scripts` → 8 pts
+- `10–20 scripts` → 5 pts
+- `> 20 scripts` → 1 pt (heavy)
 
 If exact bytes are not determinable, use script count as a proxy and assign conservative scores.
 
 ### 1.3 Total CSS payload (0–4 pts) _(approximate)_
 
-- `< 200 KB` → 4 pts
-- `200–400 KB` → 2 pts
-- `> 400 KB` → 0 pts
+- Baseline score for MVP → 4 pts
 
 ### 1.4 Caching headers (0–6 pts)
 
@@ -98,6 +96,17 @@ Based on `<img>` tags:
   - 3 pts.
 - If there are many large images with no WebP/AVIF:
   - 0 pts.
+
+### 1.6 Core Web Vitals Bonus (v0.4.0)
+
+If a PageSpeed API key is provided, bonus points are awarded for passing Core Web Vitals. This allows the performance score to exceed 30 (up to 41), rewarding high-performing sites without penalizing those without API access.
+
+| Metric   | Bonus Points | Criteria                                               |
+| :------- | :----------- | :----------------------------------------------------- |
+| **LCP**  | +3 pts       | Good (< 2.5s) = +3, Needs Improvement (< 4s) = +1      |
+| **CLS**  | +3 pts       | Good (< 0.1) = +3, Needs Improvement (< 0.25) = +1     |
+| **INP**  | +3 pts       | Good (< 200ms) = +3, Needs Improvement (< 500ms) = +1  |
+| **TTFB** | +2 pts       | Good (< 800ms) = +2, Needs Improvement (< 1800ms) = +1 |
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "wp-modernization-audit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A CLI tool that audits WordPress sites and generates modernization reports with performance, SEO, security, and headless-readiness insights",
   "main": "dist/cli/index.js",
   "bin": {

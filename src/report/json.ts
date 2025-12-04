@@ -7,7 +7,7 @@ import type { AuditResult } from "../types";
 export function generateJsonReport(result: AuditResult): string {
   const jsonOutput = {
     meta: {
-      version: "0.2.0",
+      version: "0.4.0",
       generatedAt: result.timestamp,
       url: result.url,
       pagesAudited: result.pages.length,
@@ -39,6 +39,7 @@ export function generateJsonReport(result: AuditResult): string {
           scriptLoadCategory: result.analyses.performance.scriptLoadCategory,
           imageOptimization: result.analyses.performance.imageOptimization,
           caching: result.analyses.performance.caching,
+          coreWebVitals: result.analyses.performance.coreWebVitals || null,
         },
       },
       seo: {
@@ -102,6 +103,7 @@ export function generateJsonReport(result: AuditResult): string {
           imageFormats: page.performanceResult.imageFormats,
           cacheControl: page.performanceResult.cacheControlValue,
         },
+        lighthouseData: page.lighthouseData || null,
         security: {
           isHttps: page.securityResult.isHttps,
           securityHeaders: page.securityResult.securityHeaders,

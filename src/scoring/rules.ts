@@ -76,7 +76,43 @@ export function scorePerformance(analysis: PerformanceAnalysis): number {
   // For MVP, we'll give a baseline score
   score += 4;
 
-  return Math.min(score, 30);
+  // Core Web Vitals Bonus (v0.4.0) - Up to +11 bonus points if PageSpeed data available
+  // This doesn't penalize sites without API, but rewards those with good vitals
+  if (analysis.coreWebVitals) {
+    const vitals = analysis.coreWebVitals;
+
+    // LCP bonus (0-3 pts)
+    if (vitals.lcpStatus === "good") {
+      score += 3;
+    } else if (vitals.lcpStatus === "needs-improvement") {
+      score += 1;
+    }
+
+    // CLS bonus (0-3 pts)
+    if (vitals.clsStatus === "good") {
+      score += 3;
+    } else if (vitals.clsStatus === "needs-improvement") {
+      score += 1;
+    }
+
+    // INP bonus (0-3 pts)
+    if (vitals.inpStatus === "good") {
+      score += 3;
+    } else if (vitals.inpStatus === "needs-improvement") {
+      score += 1;
+    }
+
+    // TTFB bonus (0-2 pts)
+    if (vitals.ttfbStatus === "good") {
+      score += 2;
+    } else if (vitals.ttfbStatus === "needs-improvement") {
+      score += 1;
+    }
+  }
+
+  // Max score is 30 (baseline) + 11 (web vitals bonus) = 41
+  // But we cap at reasonable performance score
+  return Math.min(score, 41);
 }
 
 // ============================================================================
